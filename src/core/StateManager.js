@@ -212,21 +212,21 @@ class StateManager {
     // Case A: First triage
     if (oldIsCorrect === null) {
       if (newIsCorrect) {
-        this.state.score += 100;
+        this.state.score += 200; // Buff: 100 -> 200
         globalEvents.emit('TRIAGE_CORRECT', { patient: p });
       } else {
-        this.state.score -= 50;
+        this.state.score -= 100; // Buff: -50 -> -100 (keep the ratio)
         globalEvents.emit('TRIAGE_INCORRECT', { patient: p });
       }
     } 
     // Case B: Re-triage (Correct -> Incorrect)
     else if (oldIsCorrect && !newIsCorrect) {
-      this.state.score -= 150; // Refund 100 bonus, apply 50 penalty
+      this.state.score -= 300; // Buff: Refund 200 bonus, apply 100 penalty
       globalEvents.emit('TRIAGE_INCORRECT', { patient: p });
     }
     // Case C: Re-triage (Incorrect -> Correct)
     else if (!oldIsCorrect && newIsCorrect) {
-      this.state.score += 150; // Refund 50 penalty, apply 100 bonus
+      this.state.score += 300; // Buff: Refund 100 penalty, apply 200 bonus
       globalEvents.emit('TRIAGE_CORRECT', { patient: p });
     }
     // Case D: Re-triage (Incorrect -> Incorrect or Correct -> Correct)
@@ -356,12 +356,12 @@ class StateManager {
     v.loadedPatients.forEach(pid => {
         const p = this.state.patients.find(x => x.id === pid);
         if (p) {
-            if (p.status === 'red') vehicleScore += 200; // Best to transport
-            if (p.status === 'yellow') vehicleScore += 100;
-            if (p.status === 'green') vehicleScore += 50; 
-            if (p.status === 'black') vehicleScore -= 500; // Terrible mistake
+            if (p.status === 'red') vehicleScore += 500; // Buff: 200 -> 500
+            if (p.status === 'yellow') vehicleScore += 300; // Buff: 100 -> 300
+            if (p.status === 'green') vehicleScore += 150; // Buff: 50 -> 150
+            if (p.status === 'black') vehicleScore -= 800; // Penalty Buff: -500 -> -800
             
-            // Mark as transported so they disappear from UI
+            // Mark as transported so they disappear from UI (but now styled as hollow on map)
             p.transported = true;
         }
     });

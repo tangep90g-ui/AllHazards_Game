@@ -74,8 +74,10 @@ export default function IntegratedMap({
       })}
 
       {/* Patients Layer */}
-      {showPatients && patients.filter(p => !p.transported).map(patient => {
+      {showPatients && patients.map(patient => {
         const isSel = selectedPatientId === patient.id;
+        const isTransported = patient.transported;
+        
         let dotColor = 'rgba(200,200,200,0.2)';
         if (patient.status === 'red') dotColor = '#cc1111';
         if (patient.status === 'yellow') dotColor = '#d4a000';
@@ -86,6 +88,7 @@ export default function IntegratedMap({
           <div
             key={patient.id}
             onClick={(e) => {
+              if (isTransported) return;
               e.stopPropagation();
               if (onPatientSelect) onPatientSelect(patient.id);
             }}
@@ -93,18 +96,19 @@ export default function IntegratedMap({
               position: 'absolute', top: `${patient.y}%`, left: `${patient.x}%`,
               transform: `translate(-50%,-50%) rotate(-45deg) ${isSel ? 'scale(1.2)' : ''}`,
               width: isSel ? '40px' : '32px', height: isSel ? '40px' : '32px',
-              backgroundColor: dotColor,
-              border: isSel ? '2px solid #fff' : '1px solid rgba(255,255,255,0.15)',
+              backgroundColor: isTransported ? 'transparent' : dotColor,
+              border: isTransported ? `3px dashed ${dotColor}` : (isSel ? '2px solid #fff' : '1px solid rgba(255,255,255,0.15)'),
               borderRadius: '50% 50% 50% 0',
-              cursor: 'pointer',
-              boxShadow: isSel ? '0 0 14px rgba(255,255,255,0.5)' : `0 0 6px ${dotColor}80`,
+              cursor: isTransported ? 'default' : 'pointer',
+              boxShadow: isTransported ? 'none' : (isSel ? '0 0 14px rgba(255,255,255,0.5)' : `0 0 6px ${dotColor}80`),
               transition: 'all 0.2s',
-              animation: patient.status === 'unknown' ? 'pulse 2s infinite' : 'none',
+              animation: (patient.status === 'unknown' && !isTransported) ? 'pulse 2s infinite' : 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              zIndex: 40
+              zIndex: isTransported ? 30 : 40,
+              opacity: isTransported ? 0.6 : 1
             }}
           >
-            <User size={14} color="#fff" style={{ transform: 'rotate(45deg)' }} />
+            {!isTransported && <User size={14} color="#fff" style={{ transform: 'rotate(45deg)' }} />}
           </div>
         );
       })}
