@@ -39,11 +39,12 @@ export default function IntegratedMap({
       <div style={{ position: 'absolute', bottom: '10px', left: '10px', fontSize: '0.6rem', color: 'rgba(0,255,150,0.3)', fontWeight: 'bold', letterSpacing: '2px' }}>TACTICAL BOARD VIEW</div>
 
       {/* Vehicles Layer (Ambulances at Staging/Right-Bottom) */}
-      {vehicles && vehicles.filter(v => !v.departed).map(v => (
+      {vehicles && vehicles.filter(v => !v.departed).map((v, idx, arr) => (
         <div
             key={`veh-${v.id}`}
             onClick={(e) => {
               e.stopPropagation();
+              console.log("Vehicle clicked:", v.id);
               if (onVehicleClick) onVehicleClick(v.id);
             }}
             style={{
@@ -53,12 +54,16 @@ export default function IntegratedMap({
               cursor: 'pointer',
               zIndex: 45,
               animation: 'pulse 3s infinite',
-              filter: 'drop-shadow(0 0 5px rgba(0,255,204,0.6))'
+              filter: 'drop-shadow(0 0 5px rgba(0,255,204,0.6))',
+              display: 'flex', flexDirection: 'column', alignItems: 'center'
             }}
             title={v.name}
         >
           <Ambulance size={24} />
-          <div style={{ fontSize: '0.5rem', textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.7)', padding: '0 2px' }}>{v.id}</div>
+          {/* Only show the count on the first ambulance in the stack or as a summary */}
+          <div style={{ fontSize: '0.6rem', fontWeight: 'bold', backgroundColor: 'rgba(0,40,40,0.9)', padding: '1px 4px', borderRadius: '3px', border: '1px solid #00ffcc', marginTop: '-2px' }}>
+            現場 x {arr.length}
+          </div>
         </div>
       ))}
 

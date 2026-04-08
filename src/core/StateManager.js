@@ -55,22 +55,24 @@ class StateManager {
     // Initial vehicles for transport tab
     this.addVehicle("救護 91 (ALS 車輛)", 1);
     this.addVehicle("民間救護車 (BLS 車輛)", 2);
-    // Generate 6 random patients for the map
-    const newPatients = [];
-    for(let i=0; i<5; i++) {
-        const randTemplate = patientTemplates[Math.floor(Math.random() * patientTemplates.length)];
+    for(let i=0; i<6; i++) {
+        // Ensure initial diversity by rotating through key templates
+        const templateIndex = (i % patientTemplates.length);
+        const randTemplate = patientTemplates[templateIndex];
         const p = new Patient(
             i+1, 
-            Math.floor(Math.random() * 70) + 15,
-            Math.floor(Math.random() * 70) + 15,
+            Math.floor(Math.random() * 60) + 20,
+            Math.floor(Math.random() * 60) + 20,
             randTemplate
         );
         
         // Feature: Green gathering
         if (megaphoned && p.trueTriageStatus === 'green') {
            p.status = 'green';
-           p.x = 90; p.y = 90; // Move them to bottom right safe zone
-           this.state.score += 50; // Bonus for early clustering
+           // Place them near bottom right if megaphoned
+           p.x = 85 + (Math.random() * 10); 
+           p.y = 85 + (Math.random() * 10);
+           this.state.score += 50; 
         }
         
         newPatients.push(p);
