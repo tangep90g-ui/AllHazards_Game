@@ -49,17 +49,9 @@ export default function FloatingAction({ id, title, timeLeft, onExecute, initial
   }, [isDragging, dragStart]);
 
   const isReady = timeLeft === 0;
-  const [isSmallScreen, setIsSmallScreen] = useState(window.innerHeight < 500);
-
-  useEffect(() => {
-    const checkSize = () => setIsSmallScreen(window.innerHeight < 500);
-    window.addEventListener('resize', checkSize);
-    return () => window.removeEventListener('resize', checkSize);
-  }, []);
-
-  const btnWidth = isSmallScreen ? '60px' : '85px';
-  const iconSize = isSmallScreen ? 22 : 30;
-  const zapSize = isSmallScreen ? 14 : 18;
+  const btnWidth = '85px';
+  const iconSize = 30;
+  const zapSize = 18;
 
   return (
     <div
@@ -81,8 +73,8 @@ export default function FloatingAction({ id, title, timeLeft, onExecute, initial
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: isSmallScreen ? '0px' : '2px',
-          padding: isSmallScreen ? '4px' : '8px',
+          gap: '2px',
+          padding: '8px',
           width: btnWidth,
           borderRadius: '10px',
           backgroundColor: isReady ? 'rgba(0, 255, 204, 0.2)' : 'rgba(20, 20, 30, 0.7)',
@@ -94,7 +86,7 @@ export default function FloatingAction({ id, title, timeLeft, onExecute, initial
           animation: isReady ? 'pulse-green 2s infinite' : 'none'
         }}
       >
-        <div style={{ fontSize: isSmallScreen ? '0.5rem' : '0.6rem', color: isReady ? '#fff' : 'var(--color-yellow)', fontWeight: '900', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.5px', marginBottom: isSmallScreen ? '0px' : '2px' }}>
+        <div style={{ fontSize: '0.6rem', color: isReady ? '#fff' : 'var(--color-yellow)', fontWeight: '900', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.5px', marginBottom: '2px' }}>
           {title.slice(0, 6)}
         </div>
         
@@ -103,8 +95,8 @@ export default function FloatingAction({ id, title, timeLeft, onExecute, initial
              <Zap size={zapSize} fill="#000" color="#000" />
           </div>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: isSmallScreen ? '0.8rem' : '1.1rem', fontWeight: 'bold', color: '#fff', fontFamily: 'monospace' }}>
-            <Clock size={isSmallScreen ? 10 : 12} color="var(--color-yellow)" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '1.1rem', fontWeight: 'bold', color: '#fff', fontFamily: 'monospace' }}>
+            <Clock size={12} color="var(--color-yellow)" />
             {timeLeft}s
           </div>
         )}

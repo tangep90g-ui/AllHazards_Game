@@ -1,30 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { gameState } from '../../core/StateManager';
 import { globalEvents } from '../../core/EventSystem';
-import { LayoutDashboard, CheckSquare, Clock, ShieldAlert, HeartPulse, Ambulance, Terminal, Timer, Bell } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Clock, ShieldAlert, HeartPulse, Ambulance, Terminal } from 'lucide-react';
 import expectedActionsData from '../../assets/data/expected_actions.json';
 
 import TriagePhaseUI from './TriagePhaseUI';
 import TransportUI from './TransportUI';
 import TreatmentUI from './TreatmentUI';
-import FloatingAction from '../components/FloatingAction';
 
 export default function CommandCenterUI() {
   const [gameStateData, setGameStateData] = useState(gameState.getState());
   const [activeTab, setActiveTab] = useState('TRIAGE');
   const [completedActions, setCompletedActions] = useState({});
-  const [pendingPlacementAction, setPendingPlacementAction] = useState(null);
-  const [showTaskPopup, setShowTaskPopup] = useState(false);
-
-  const getSkillPos = (id) => {
-    // Vertically aligned on the left, starting lower to avoid nav overlap
-    const mapping = {
-        'action_megaphone': { x: 3, y: 25 }, 
-        'action_hospital_comms': { x: 3, y: 50 },
-        'action_request_als': { x: 3, y: 75 }
-    };
-    return mapping[id] || { x: 3, y: 85 };
-  };
+  const [pendingPlacementAction, setPendingPlacementAction] = useState(null); // Added for Map Modal
 
   useEffect(() => {
     const onStateUpdate = (newState) => {
@@ -35,42 +23,16 @@ export default function CommandCenterUI() {
     return () => globalEvents.off('STATE_UPDATE', onStateUpdate);
   }, []);
 
-  const { score, timeLeft, patients, skillsCooldown } = gameStateData;
+  const { score, timeLeft, patients } = gameStateData;
 
-  // Filter skills that are already displayed as floating buttons
-  const floatingSkillIds = ['action_megaphone', 'action_hospital_comms', 'action_request_als'];
-
-  const activeTasks = useMemo(() => {
-    return expectedActionsData
-      .map(action => {
-        const [maxT, minT] = action.recommendedTimeWindow;
-        const isCompleted = !!completedActions[action.id];
-        const isCurrentWindow = !isCompleted && (timeLeft <= maxT && timeLeft >= minT);
-        return { ...action, isCurrentWindow, isCompleted };
-      })
-      .filter(a => a.isCurrentWindow && !floatingSkillIds.includes(a.id));
-  }, [timeLeft, completedActions]);
-
-  // Auto-show tasks when they become active
-  useEffect(() => {
-    if (activeTasks.length > 0) {
-      setShowTaskPopup(true);
-    } else {
-      setShowTaskPopup(false);
-    }
-  }, [activeTasks.length]);
-
-  const handleActionClick = (id) => {
-    const action = expectedActionsData.find(a => a.id === id);
-    if (!action || completedActions[id]) return;
+  const handleActionClick = (action) => {
+    if (completedActions[action.id]) return;
     
     if (action.requiresPlacement) {
         setPendingPlacementAction(action);
     } else {
-        gameState.processActionChecklist(id);
+        gameState.processActionChecklist(action.id);
     }
-    
-    if (activeTasks.length <= 1) setShowTaskPopup(false);
   };
 
   const handleMapPlacement = (e) => {
@@ -86,172 +48,166 @@ export default function CommandCenterUI() {
     else if (dist < 35) zone = 'warm';
 
     const placementBonus = pendingPlacementAction.zoneRule[zone] || 0;
-    gameState.processActionChecklist(pendingPlacementAction.id, placementBonus, { x, y });
+    
+    gameState.processActionChecklist(pendingPlacementAction.id, placementBonus);
     setPendingPlacementAction(null);
   };
 
   return (
-    <div style={{ display: 'flex', width: '100vw', height: '100vh', backgroundColor: 'var(--bg-dark)', overflow: 'hidden', position: 'relative' }}>
+    <div style={{ display: 'flex', width: '100vw', height: '100vh', backgroundColor: 'var(--bg-dark)', overflow: 'hidden' }}>
       
-      {/* Floating Skills Layout (Only visible in TRIAGE tab, avoiding START panel) */}
-      <div style={{ 
-        position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 2000,
-        opacity: (activeTab === 'TRIAGE' && !pendingPlacementAction) ? 1 : 0,
-        transition: 'opacity 0.2s'
-      }}>
-        {activeTab === 'TRIAGE' && floatingSkillIds.map(id => {
-           const actionInfo = expectedActionsData.find(a => a.id === id);
-           const time = skillsCooldown[id] || 0;
-           const pos = getSkillPos(id);
-           return (
-             <FloatingAction 
-               key={id} 
-               id={id} 
-               title={actionInfo?.title || 'SKILL'} 
-               timeLeft={time} 
-               onExecute={() => handleActionClick(id)}
-               initialX={pos.x}
-               initialY={pos.y}
-             />
-           );
-        })}
-      </div>
-
-      {/* Task Popup Overlay (Disappears after action or when map modal is active) */}
-      {showTaskPopup && activeTasks.length > 0 && !pendingPlacementAction && (
-        <div style={{ 
-          position: 'absolute', 
-          top: '20%', 
-          left: '50%', 
-          transform: 'translateX(-50%)', 
-          zIndex: 3000, 
-          width: '90%', 
-          maxWidth: '400px',
-          animation: 'slideDown 0.3s ease-out'
-        }}>
-          <div className="glass-panel" style={{ padding: '1.2rem', border: '2px solid var(--color-yellow)', backgroundColor: 'rgba(20, 20, 30, 0.95)' }}>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--color-yellow)', marginBottom: '0.8rem', borderBottom: '1px solid rgba(255,204,0,0.2)', paddingBottom: '0.5rem' }}>
-                <Bell size={20} />
-                <span style={{ fontWeight: 'bold', letterSpacing: '1px' }}>緊急指揮任務 (URGENT TASK)</span>
-             </div>
-             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                {activeTasks.map(task => (
-                  <div key={task.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.8rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '6px' }}>
-                    <div style={{ flex: 1 }}>
-                       <div style={{ fontWeight: 'bold' }}>{task.title}</div>
-                       <div style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '0.2rem' }}>時效獎勵: +{task.bonus}</div>
-                    </div>
-                    <button 
-                      onClick={() => handleActionClick(task.id)}
-                      style={{ padding: '0.6rem 1.2rem', backgroundColor: 'var(--color-yellow)', color: '#000', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
-                    >
-                      立即執行
-                    </button>
-                  </div>
-                ))}
-             </div>
-             <button onClick={() => setShowTaskPopup(false)} style={{ width: '100%', marginTop: '1rem', backgroundColor: 'transparent', border: '1px solid #444', color: '#888', padding: '0.4rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}>暫時關閉</button>
-          </div>
+      {/* Left Sidebar: Expected Actions Checklist */}
+      <aside style={{ width: '30%', minWidth: '300px', backgroundColor: '#0f0f15', borderRight: '1px solid var(--border-neon)', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '1rem', borderBottom: '1px solid #333', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <h1 style={{ margin: 0, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Terminal size={24} color="var(--color-primary)" />
+            {gameStateData.currentScenario?.subtitle || 'INCIDENT RESPONSE MGR'}
+          </h1>
+          <p style={{ marginTop: '0.5rem', marginBottom: 0, fontSize: '0.8rem', color: 'var(--text-dim)' }}>在對應的時間窗內完成任務可獲得指揮加分。</p>
         </div>
-      )}
+        
+        <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          {expectedActionsData
+            .map(action => {
+              const status = completedActions[action.id];
+              const isCooldownActive = action.isCooldownAction && gameStateData.skillsCooldown[action.id] > 0;
+              const [maxT, minT] = action.recommendedTimeWindow;
+              const isCompleted = !!status;
+              const isCurrentWindow = !isCompleted && (timeLeft <= maxT && timeLeft >= minT);
+              const isMissed = !isCompleted && timeLeft < minT;
+              
+              // Sorting logic: 0 = Active, 1 = Pending, 2 = Done/Missed
+              let weight = 1;
+              if (isCurrentWindow) weight = 0;
+              else if (isCompleted || isMissed) weight = 2;
 
-      {/* Main Content Area */}
+              return { ...action, status, isCooldownActive, isCompleted, isCurrentWindow, isMissed, weight };
+            })
+            .sort((a, b) => a.weight - b.weight)
+            .map(action => {
+              const { status, isCooldownActive, isCompleted, isCurrentWindow, isMissed } = action;
+              const [maxT, minT] = action.recommendedTimeWindow;
+              const isSuccess = status === 'success';
+              
+              const rowStyle = {
+                padding: '0.75rem', 
+                borderRadius: '6px', 
+                border: '1px solid #222',
+                backgroundColor: isCurrentWindow ? 'rgba(255,204,0,0.08)' : isSuccess ? 'rgba(0,255,204,0.02)' : 'rgba(255,255,255,0.01)',
+                opacity: (isCompleted || isMissed) ? 0.4 : 1,
+                borderLeft: isCurrentWindow ? '4px solid var(--color-yellow)' : isSuccess ? '4px solid var(--color-green)' : '1px solid #222',
+                transition: 'all 0.3s ease'
+              };
+
+              return (
+                <div key={action.id} onClick={() => (isCooldownActive || isCompleted) ? null : handleActionClick(action)} style={rowStyle}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontWeight: 'bold', fontSize: '0.85rem', color: isSuccess ? 'var(--color-green)' : '#fff' }}>{action.title}</span>
+                        {isCurrentWindow && <span style={{ fontSize: '0.5rem', backgroundColor: 'var(--color-yellow)', color: '#000', padding: '1px 3px', borderRadius: '2px', fontWeight: 'bold' }}>ACTIVE</span>}
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: isCurrentWindow ? 'var(--color-yellow)' : '#555', display: 'flex', alignItems: 'center', gap: '0.2rem', marginTop: '2px' }}>
+                        <Clock size={10} /> {maxT}s - {minT}s
+                      </div>
+                    </div>
+                    <div>
+                      {!isCompleted && !isMissed && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); (isCooldownActive || isCompleted) ? null : handleActionClick(action) }}
+                          style={{ padding: '0.3rem 0.6rem', backgroundColor: isCurrentWindow ? 'var(--color-yellow)' : '#333', color: '#000', border: 'none', borderRadius: '3px', fontSize: '0.75rem', fontWeight: 'bold', cursor: isCooldownActive ? 'not-allowed' : 'pointer' }}
+                        >
+                          {isCooldownActive ? `${gameStateData.skillsCooldown[action.id]}s` : '執行'}
+                        </button>
+                      )}
+                      {isMissed && <span style={{ color: '#555', fontSize: '0.7rem' }}>已逾時</span>}
+                      {isCompleted && (
+                        <span style={{ color: isSuccess ? 'var(--color-green)' : 'var(--color-red)', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                          {isSuccess ? `+${action.bonus}` : '✗'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {!isCompleted && <div style={{ fontSize: '0.75rem', color: '#888', marginTop: '0.4rem', lineHeight: '1.4' }}>{action.description}</div>}
+                </div>
+              );
+            })}
+        </div>
+      </aside>
+
+      {/* Right Content Area: Global Header + Tabs + View */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         
-        {/* Global Control Header (Responsive) */}
-        <header style={{ 
-          backgroundColor: 'rgba(10, 10, 15, 0.95)', 
-          borderBottom: '1px solid var(--border-neon)', 
-          padding: '0 1rem', 
-          height: 'var(--header-h)',
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          zIndex: 10,
-          flexShrink: 0
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-             <Terminal size={18} color="#0ff" />
-             <div>
-               <h1 style={{ margin: 0, fontSize: '0.8rem', color: '#0ff', letterSpacing: '1px' }}>COMMAND POST</h1>
-               <div style={{ fontSize: '0.55rem', color: '#555' }}>{gameStateData.currentScenario?.title || 'Unknown'}</div>
-             </div>
+        {/* Global Control Header */}
+        <header style={{ backgroundColor: 'rgba(10, 10, 15, 0.95)', borderBottom: '1px solid var(--border-neon)', padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+             <LayoutDashboard size={24} color="#0ff" />
+             <h1 style={{ margin: 0, fontSize: '1.2rem', color: '#0ff', letterSpacing: '2px' }}>現場總指揮中心 (INCIDENT COMMAND POST)</h1>
           </div>
           
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-             <div style={{ textAlign: 'right' }}>
-               <div style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--color-red)', fontFamily: 'monospace' }}>
+          <div style={{ display: 'flex', gap: '3rem', alignItems: 'center' }}>
+             <div style={{ textAlign: 'center' }}>
+               <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>任務剩餘時間 (TIMER)</div>
+               <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-red)', fontFamily: 'monospace' }}>
                  {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
                </div>
              </div>
-             <div style={{ textAlign: 'right' }}>
-               <div style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--color-yellow)' }}>
+             <div style={{ textAlign: 'center' }}>
+               <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>任務總指揮評分 (SCORE)</div>
+               <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-yellow)' }}>
                  {score.toLocaleString()}
                </div>
              </div>
           </div>
         </header>
 
-        {/* Tab Navigation (Responsive Icon Based) */}
-        <nav style={{ display: 'flex', backgroundColor: '#111', borderBottom: '1px solid var(--border-neon)', height: 'var(--nav-h)', flexShrink: 0 }}>
+        {/* Tab Navigation */}
+        <nav style={{ display: 'flex', backgroundColor: '#111', borderBottom: '1px solid var(--border-neon)', padding: '0 1rem' }}>
           {[
-            { id: 'TRIAGE', icon: <ShieldAlert size={18} />, label: '檢傷' },
-            { id: 'TREATMENT', icon: <HeartPulse size={18} />, label: '急救' },
-            { id: 'TRANSPORT', icon: <Ambulance size={18} />, label: '調度' }
+            { id: 'TRIAGE', icon: <ShieldAlert size={18} />, label: '現場檢傷 (HOT ZONE)' },
+            { id: 'TREATMENT', icon: <HeartPulse size={18} />, label: '急救處置 (TREATMENT)' },
+            { id: 'TRANSPORT', icon: <Ambulance size={18} />, label: '後送調度 (TRANSPORT)' }
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               style={{
-                flex: 1,
-                display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
-                padding: '0 0.2rem',
+                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                padding: '1rem 2rem',
                 backgroundColor: activeTab === tab.id ? 'rgba(0, 255, 204, 0.1)' : 'transparent',
                 color: activeTab === tab.id ? 'var(--color-green)' : 'var(--text-dim)',
                 border: 'none',
-                borderBottom: activeTab === tab.id ? '2px solid var(--color-green)' : '2px solid transparent',
+                borderBottom: activeTab === tab.id ? '3px solid var(--color-green)' : '3px solid transparent',
                 cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '1rem',
                 transition: 'all 0.2s'
               }}
             >
-              {tab.icon}
-              <span style={{ fontSize: '0.65rem', fontWeight: 'bold' }}>{tab.label}</span>
+              {tab.icon} {tab.label}
             </button>
           ))}
         </nav>
 
-        <div style={{ flex: 1, position: 'relative', overflow: activeTab === 'TRIAGE' ? 'hidden' : 'auto' }}>
+        <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+          
           {/* Overarching Placement Map Modal */}
           {pendingPlacementAction && (
-             <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '1rem', overflowY: 'auto' }}>
-               <div className="glass-panel" style={{ padding: '1rem', width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, marginBottom: '2rem' }}>
-                 <h3 style={{ color: '#00ffcc', marginBottom: '1rem', fontSize: '1rem', textAlign: 'center' }}>請在下方戰術地圖標示【{pendingPlacementAction.title}】</h3>
-                 <div 
-                   onClick={handleMapPlacement}
-                   style={{ position: 'relative', width: '100%', aspectRatio: '16/9', borderRadius: '8px', overflow: 'hidden', cursor: 'crosshair', border: '1px solid #444' }}
-                 >
-                   <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(5,5,10,0.85)', backgroundImage: `url(${gameStateData.currentScenario?.bgImage || '/bg_collapse.png'}), radial-gradient(circle at center, rgba(0,255,0,0.05) 0%, transparent 80%), linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)`, backgroundBendMode: 'screen', backgroundSize: 'cover, 40px 40px, 40px 40px', backgroundPosition: 'center' }} />
-                   <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '70%', height: '70%', borderRadius: '50%', border: '1px dashed var(--color-yellow)', backgroundColor: 'rgba(255, 204, 0, 0.05)' }}></div>
-                   <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '30%', height: '30%', borderRadius: '50%', border: '1px dashed var(--color-red)', backgroundColor: 'rgba(255, 0, 0, 0.1)' }}></div>
-
-                   {/* Tactical Intel Sync */}
-                   {(gameStateData.tacticalAssets || []).map((asset, idx) => {
-                      const color = (asset.type === 'ICP' || asset.type === 'action_icp') ? '#00ffcc' : (asset.type.includes('treatment') ? 'var(--color-yellow)' : '#fff');
-                      return (
-                        <div key={`modal-asset-${idx}`} style={{
-                          position: 'absolute', top: `${asset.y}%`, left: `${asset.x}%`,
-                          width: '12px', height: '12px', borderRadius: '50%', 
-                          backgroundColor: 'rgba(0,0,0,0.85)', border: `1.5px solid ${color}`,
-                          transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          zIndex: 10
-                        }}>
-                          <div style={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: color }} />
-                        </div>
-                      );
-                   })}
+             <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+               <h2 style={{ color: '#00ffcc', marginBottom: '1rem', textShadow: '0 0 10px #00ffcc' }}>請點擊地圖選定【{pendingPlacementAction.title}】的預定設置位置</h2>
+               <div 
+                 onClick={handleMapPlacement}
+                 style={{ position: 'relative', width: '80%', height: '80%', borderRadius: '12px', overflow: 'hidden', cursor: 'crosshair', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}
+               >
+                 <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(5,5,10,0.85)', backgroundImage: `url(${gameStateData.currentScenario?.bgImage || '/bg_collapse.png'}), radial-gradient(circle at center, rgba(0,255,0,0.05) 0%, transparent 80%), linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)`, backgroundBlendMode: 'screen', backgroundSize: 'cover, 40px 40px, 40px 40px', backgroundPosition: 'center' }} />
+                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '70%', height: '70%', borderRadius: '50%', border: '2px dashed var(--color-yellow)', backgroundColor: 'rgba(255, 204, 0, 0.05)', display: 'flex', justifyContent: 'center' }}>
+                    <span style={{ color: 'var(--color-yellow)', fontWeight: 'bold', marginTop: '1rem', letterSpacing: '4px' }}>除污緩衝區 (WARM ZONE)</span>
                  </div>
-                 <button onClick={() => setPendingPlacementAction(null)} style={{ marginTop: '1rem', padding: '0.5rem 2rem', backgroundColor: '#333', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>取消</button>
+                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '30%', height: '30%', borderRadius: '50%', border: '2px dashed var(--color-red)', backgroundColor: 'rgba(255, 0, 0, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                   <span style={{ color: 'var(--color-red)', fontWeight: 'bold', letterSpacing: '4px' }}>災變原爆熱區</span>
+                 </div>
                </div>
+               <button onClick={() => setPendingPlacementAction(null)} style={{ marginTop: '1rem', padding: '0.5rem 2rem', backgroundColor: '#333', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>取消佈置</button>
              </div>
           )}
 
@@ -259,23 +215,15 @@ export default function CommandCenterUI() {
             <TriagePhaseUI isEmbedded={true} />
           </div>
           
-          <div style={{ position: activeTab === 'TREATMENT' ? 'relative' : 'absolute', inset: 0, opacity: activeTab === 'TREATMENT' ? 1 : 0, pointerEvents: activeTab === 'TREATMENT' ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
+          <div style={{ position: 'absolute', inset: 0, opacity: activeTab === 'TREATMENT' ? 1 : 0, pointerEvents: activeTab === 'TREATMENT' ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
             <TreatmentUI isEmbedded={true} />
           </div>
 
-          <div style={{ position: activeTab === 'TRANSPORT' ? 'relative' : 'absolute', inset: 0, opacity: activeTab === 'TRANSPORT' ? 1 : 0, pointerEvents: activeTab === 'TRANSPORT' ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
+          <div style={{ position: 'absolute', inset: 0, opacity: activeTab === 'TRANSPORT' ? 1 : 0, pointerEvents: activeTab === 'TRANSPORT' ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
             <TransportUI isEmbedded={true} />
           </div>
         </div>
       </main>
-      
-      {/* Animation Styles */}
-      <style>{`
-        @keyframes slideDown {
-          from { opacity: 0; transform: translate(-50%, -60%); }
-          to { opacity: 1; transform: translate(-50%, -50%); }
-        }
-      `}</style>
     </div>
   );
 }

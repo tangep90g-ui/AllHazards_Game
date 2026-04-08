@@ -23,8 +23,7 @@ export default function DispatchMapUI() {
       display: 'flex', 
       flexDirection: 'column', 
       alignItems: 'center', 
-      overflowY: 'auto',
-      padding: '1rem 0'
+      overflow: 'hidden'
     }}>
       
       <div style={{ 

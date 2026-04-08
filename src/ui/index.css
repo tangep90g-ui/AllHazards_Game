@@ -10,24 +10,16 @@
   --color-green: #00cc66;
   --color-black: #1a1a1a;
   
-  --header-h: 60px;
-  --nav-h: 50px;
+  --header-h: 70px;
+  --nav-h: 55px;
   
   --glitch-animation: glitch 1.5s infinite;
-}
-
-@media screen and (max-height: 450px) {
-  :root {
-    --header-h: 40px;
-    --nav-h: 40px;
-  }
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  -webkit-overflow-scrolling: touch; /* Smooth mobile scrolling */
 }
 
 body {
@@ -73,28 +65,6 @@ body {
   width: 100%;
 }
 
-/* Orientation Alert Overlay */
-#orientation-alert {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: #000;
-  color: #fff;
-  z-index: 10000;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 2rem;
-}
 
-@media screen and (max-width: 950px) and (orientation: portrait) {
-  #orientation-alert { display: flex; }
-}
 
-/* Mobile-first base styles */
-@media screen and (max-width: 1024px) {
-  :root {
-    --header-height: auto;
-  }
-}
+/* AllHazards Game Styling */

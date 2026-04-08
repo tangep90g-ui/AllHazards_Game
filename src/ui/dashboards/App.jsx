@@ -21,7 +21,7 @@ export default function App() {
   const { phase, score, patients } = gameStateData;
 
   return (
-    <div style={{ width: '100vw', height: '100vh', overflow: 'auto', backgroundColor: 'var(--bg-dark)' }}>
+    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: 'var(--bg-dark)' }}>
       {phase === 'DISPATCH' && <DispatchMapUI />}
       {phase === 'SCENE_SIZEUP' && <SceneSizeupUI />}
       {phase === 'COMMAND_CENTER' && <CommandCenterUI />}

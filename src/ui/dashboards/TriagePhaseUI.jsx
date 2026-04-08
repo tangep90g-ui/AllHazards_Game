@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { User, ScanEye, RadioTower, HeartPulse, Ambulance, ShieldAlert, ChevronRight, ChevronLeft, Search, ZoomIn, ZoomOut } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, ScanEye } from 'lucide-react';
 
 import { gameState } from '../../core/StateManager';
 import { globalEvents } from '../../core/EventSystem';
@@ -12,25 +12,24 @@ function HumanBodySVG({ scannedParts, onHover }) {
     strokeWidth: 1.5,
     cursor: 'crosshair',
     transition: 'fill 0.3s',
-    pointerEvents: 'auto',
   });
-
-  const handleTouch = (e, part) => {
-    // Only trigger if mouse or touch is active
-    if (e.buttons > 0 || e.type.includes('touch')) {
-        onHover(part);
-    }
-  };
 
   return (
     <svg viewBox="0 0 90 200" width="90" height="200" style={{ display: 'block', flexShrink: 0 }}>
       {/* Head */}
-      <ellipse cx="45" cy="17" rx="14" ry="15" {...zoneStyle('head')} onMouseMove={(e) => handleTouch(e, 'head')} onTouchMove={(e) => handleTouch(e, 'head')} />
+      <ellipse cx="45" cy="17" rx="14" ry="15" {...zoneStyle('head')} onMouseMove={() => onHover('head')} />
+      {/* Neck */}
+      <rect x="40" y="30" width="10" height="9" fill="rgba(255,255,255,0.04)" stroke="#333" strokeWidth={1} />
       {/* Torso */}
-      <rect x="24" y="39" width="42" height="60" rx="6" {...zoneStyle('chest')} onMouseMove={(e) => handleTouch(e, 'chest')} onTouchMove={(e) => handleTouch(e, 'chest')} />
-      {/* Hand zones */}
-      <ellipse cx="16" cy="91" rx="8" ry="10" {...zoneStyle('hand')} onMouseMove={(e) => handleTouch(e, 'hand')} onTouchMove={(e) => handleTouch(e, 'hand')} />
-      <ellipse cx="74" cy="91" rx="8" ry="10" {...zoneStyle('hand')} onMouseMove={(e) => handleTouch(e, 'hand')} onTouchMove={(e) => handleTouch(e, 'hand')} />
+      <rect x="24" y="39" width="42" height="60" rx="6" {...zoneStyle('chest')} onMouseMove={() => onHover('chest')} />
+      {/* Left Upper Arm */}
+      <rect x="10" y="39" width="13" height="42" rx="5" fill="rgba(255,255,255,0.04)" stroke="#444" strokeWidth={1} />
+      {/* Right Upper Arm */}
+      <rect x="67" y="39" width="13" height="42" rx="5" fill="rgba(255,255,255,0.04)" stroke="#444" strokeWidth={1} />
+      {/* Left Hand */}
+      <ellipse cx="16" cy="91" rx="8" ry="10" {...zoneStyle('hand')} onMouseMove={() => onHover('hand')} />
+      {/* Right Hand */}
+      <ellipse cx="74" cy="91" rx="8" ry="10" {...zoneStyle('hand')} onMouseMove={() => onHover('hand')} />
       {/* Pelvis */}
       <rect x="24" y="99" width="42" height="18" rx="4" fill="rgba(255,255,255,0.04)" stroke="#444" strokeWidth={1} />
       {/* Left Leg */}
@@ -123,34 +122,6 @@ export default function TriagePhaseUI() {
   const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [feedbackMsg, setFeedbackMsg] = useState(null);
   const [scan, setScan] = useState({ head: 0, chest: 0, hand: 0 });
-  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 950);
-  
-  // Tactical Map Transform States
-  const [mapTransform, setMapTransform] = useState({ x: 0, y: 0, scale: 1 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [lastTouch, setLastTouch] = useState(null);
-  const mapViewportRef = useRef(null);
-  const sidebarRef = useRef(null);
-
-  useEffect(() => {
-    const checkRes = () => { if (window.innerWidth <= 950) setIsSidebarOpen(false); else setIsSidebarOpen(true); };
-    window.addEventListener('resize', checkRes);
-    return () => window.removeEventListener('resize', checkRes);
-  }, []);
-
-  // Auto-open sidebar when a patient is selected for the first time or if collapsed
-  useEffect(() => {
-    if (selectedPatientId && window.innerWidth <= 950) {
-      setIsSidebarOpen(true);
-    }
-  }, [selectedPatientId]);
-
-  // Auto-focus sidebar to top on selection
-  useEffect(() => {
-    if (selectedPatientId && sidebarRef.current) {
-        sidebarRef.current.scrollTop = 0;
-    }
-  }, [selectedPatientId]);
 
   useEffect(() => {
     const onState = (s) => setGameStateData(s);
@@ -210,49 +181,6 @@ export default function TriagePhaseUI() {
     symptom: sel.vitals.traumaSymptom
   } : null;
 
-  // -- Map Interaction Handlers --
-  const handleMapWheel = (e) => {
-    if (selectedPatientId) return; // Prioritize UI interaction if patient is open
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    setMapTransform(prev => ({
-      ...prev,
-      scale: Math.max(1, Math.min(3, prev.scale * delta))
-    }));
-  };
-
-  const handleTouchStart = (e) => {
-    if (e.touches.length === 1) {
-      setLastTouch({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-      setIsDragging(true);
-    } else if (e.touches.length === 2) {
-      const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-      setLastTouch({ dist: d });
-    }
-  };
-
-  const handleTouchMove = (e) => {
-    if (e.touches.length === 1 && isDragging && lastTouch && !lastTouch.dist) {
-      const dx = e.touches[0].clientX - lastTouch.x;
-      const dy = e.touches[0].clientY - lastTouch.y;
-      setMapTransform(prev => ({
-        ...prev,
-        x: prev.x + dx,
-        y: prev.y + dy
-      }));
-      setLastTouch({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-    } else if (e.touches.length === 2 && lastTouch && lastTouch.dist) {
-      const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-      const delta = d / lastTouch.dist;
-      setMapTransform(prev => ({
-        ...prev,
-        scale: Math.max(1, Math.min(3, prev.scale * delta))
-      }));
-      setLastTouch({ dist: d });
-    }
-  };
-
-  const resetMap = () => setMapTransform({ x: 0, y: 0, scale: 1 });
-
   return (
     <div style={{ display: 'flex', height: '100%', position: 'relative', overflow: 'hidden' }}>
 
@@ -269,150 +197,49 @@ export default function TriagePhaseUI() {
         </div>
       )}
 
-      {/* Map Viewport */}
-      <div 
-        ref={mapViewportRef}
-        onWheel={handleMapWheel}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={() => { setIsDragging(false); setLastTouch(null); }}
-        style={{
-          flex: 1, position: 'relative', overflow: 'hidden',
-          backgroundColor: '#05050a', cursor: isDragging ? 'grabbing' : 'crosshair'
-        }}
-      >
-        <div style={{
-          position: 'absolute', inset: 0,
-          transform: `translate(${mapTransform.x}px, ${mapTransform.y}px) scale(${mapTransform.scale})`,
-          transformOrigin: 'center center',
-          transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
-          backgroundImage: `url(${gameStateData.currentScenario?.bgImage || '/bg_collapse.png'})`,
-          backgroundSize: 'cover', backgroundPosition: 'center', backgroundBlendMode: 'screen'
-        }}>
-          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(0,255,204,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,204,0.04) 1px,transparent 1px)', backgroundSize: '40px 40px', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', bottom: '10px', right: '10px', fontSize: '0.6rem', color: 'rgba(0,255,150,0.5)', fontWeight: 'bold', letterSpacing: '2px' }}>■ 輕傷集結區</div>
+      {/* Map */}
+      <div style={{
+        flex: 1, position: 'relative', overflow: 'hidden',
+        backgroundColor: 'rgba(5,5,10,0.9)',
+        backgroundImage: `url(${gameStateData.currentScenario?.bgImage || '/bg_collapse.png'})`,
+        backgroundSize: 'cover', backgroundPosition: 'center', backgroundBlendMode: 'screen'
+      }}>
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(0,255,204,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,204,0.04) 1px,transparent 1px)', backgroundSize: '40px 40px', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '10px', right: '10px', fontSize: '0.6rem', color: 'rgba(0,255,150,0.5)', fontWeight: 'bold', letterSpacing: '2px' }}>■ 輕傷集結區</div>
 
-          {/* Tactical Asset Markings */}
-          {(gameStateData.tacticalAssets || []).map((asset, idx) => {
-             let IconComp = ShieldAlert;
-             let color = 'white';
-             if (asset.type === 'ICP' || asset.type === 'action_icp') { IconComp = RadioTower; color = '#00ffcc'; }
-             if (asset.type === 'TREATMENT' || asset.type === 'action_setup_treatment') { IconComp = HeartPulse; color = 'var(--color-yellow)'; }
-             if (asset.type === 'STAGING' || asset.type === 'action_setup_staging') { IconComp = Ambulance; color = '#fff'; }
-             
-             return (
-               <div key={`asset-${idx}`} style={{
-                 position: 'absolute', top: `${asset.y}%`, left: `${asset.x}%`,
-                 transform: 'translate(-50%, -50%)', zIndex: 5,
-                 display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none'
-               }}>
-                 <div style={{ 
-                   width: '28px', height: '28px', borderRadius: '50%', 
-                   backgroundColor: 'rgba(0,0,0,0.85)', border: `1.5px solid ${color}`, 
-                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                   boxShadow: `0 0 10px ${color}60`
-                 }}>
-                   <IconComp size={16} color={color} />
-                 </div>
-                 <div style={{ 
-                   fontSize: '0.55rem', color: color, fontWeight: 'bold', marginTop: '2px', 
-                   backgroundColor: 'rgba(0,0,0,0.6)', padding: '1px 3px', borderRadius: '2px' 
-                 }}>
-                   {asset.type.split('_').pop().toUpperCase()}
-                 </div>
-               </div>
-             );
-          })}
-
-          {patients.map(patient => {
-            const isSel = selectedPatientId === patient.id;
-            let dotColor = 'rgba(200,200,200,0.2)';
-            if (patient.status === 'red') dotColor = '#cc1111';
-            if (patient.status === 'yellow') dotColor = '#d4a000';
-            if (patient.status === 'green') dotColor = '#006e2e';
-            if (patient.status === 'black') dotColor = '#333';
-            return (
-              <div
-                key={patient.id}
-                onClick={(e) => { e.stopPropagation(); setSelectedPatientId(patient.id); }}
-                style={{
-                  position: 'absolute', top: `${patient.y}%`, left: `${patient.x}%`,
-                  transform: `translate(-50%,-50%) rotate(-45deg) ${isSel ? 'scale(1.2)' : ''}`,
-                  width: isSel ? '40px' : '32px', height: isSel ? '40px' : '32px',
-                  backgroundColor: dotColor,
-                  border: isSel ? '2px solid #fff' : '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: '50% 50% 50% 0',
-                  cursor: 'pointer',
-                  boxShadow: isSel ? '0 0 14px rgba(255,255,255,0.5)' : `0 0 6px ${dotColor}80`,
-                  transition: 'all 0.2s',
-                  animation: patient.status === 'unknown' ? 'pulse 2s infinite' : 'none',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  zIndex: isSel ? 20 : 10
-                }}
-              >
-                <User size={14} color="#fff" style={{ transform: 'rotate(45deg)' }} />
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Map Control Overlay */}
-        <div style={{ position: 'absolute', bottom: '15px', left: '15px', display: 'flex', gap: '8px', zIndex: 100 }}>
-          <button onClick={resetMap} className="glass-panel" style={{ padding: '8px', border: '1px solid var(--border-neon)', color: '#0ff', backgroundColor: 'rgba(0,0,0,0.6)', cursor: 'pointer' }}>
-            <Search size={16} />
-          </button>
-          <button onClick={() => setMapTransform(prev => ({...prev, scale: Math.min(3, prev.scale + 0.2)}))} className="glass-panel" style={{ padding: '8px', border: '1px solid var(--border-neon)', color: '#0ff', backgroundColor: 'rgba(0,0,0,0.6)', cursor: 'pointer' }}>
-            <ZoomIn size={16} />
-          </button>
-          <button onClick={() => setMapTransform(prev => ({...prev, scale: Math.max(1, prev.scale - 0.2)}))} className="glass-panel" style={{ padding: '8px', border: '1px solid var(--border-neon)', color: '#0ff', backgroundColor: 'rgba(0,0,0,0.6)', cursor: 'pointer' }}>
-            <ZoomOut size={16} />
-          </button>
-        </div>
+        {patients.map(patient => {
+          const isSel = selectedPatientId === patient.id;
+          let dotColor = 'rgba(200,200,200,0.2)';
+          if (patient.status === 'red') dotColor = '#cc1111';
+          if (patient.status === 'yellow') dotColor = '#d4a000';
+          if (patient.status === 'green') dotColor = '#006e2e';
+          if (patient.status === 'black') dotColor = '#333';
+          return (
+            <div
+              key={patient.id}
+              onClick={() => setSelectedPatientId(patient.id)}
+              style={{
+                position: 'absolute', top: `${patient.y}%`, left: `${patient.x}%`,
+                transform: `translate(-50%,-50%) rotate(-45deg) ${isSel ? 'scale(1.2)' : ''}`,
+                width: isSel ? '40px' : '32px', height: isSel ? '40px' : '32px',
+                backgroundColor: dotColor,
+                border: isSel ? '2px solid #fff' : '1px solid rgba(255,255,255,0.15)',
+                borderRadius: '50% 50% 50% 0',
+                cursor: 'pointer',
+                boxShadow: isSel ? '0 0 14px rgba(255,255,255,0.5)' : `0 0 6px ${dotColor}80`,
+                transition: 'all 0.2s',
+                animation: patient.status === 'unknown' ? 'pulse 2s infinite' : 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <User size={14} color="#fff" style={{ transform: 'rotate(45deg)' }} />
+            </div>
+          );
+        })}
       </div>
 
-      {/* RIGHT PANEL (Collapsible for Mobile) */}
-      <div 
-        ref={sidebarRef}
-        style={{ 
-          width: isSidebarOpen ? '320px' : '0px', 
-          minWidth: isSidebarOpen ? '320px' : '0px', 
-        backgroundColor: '#09090f', 
-        borderLeft: isSidebarOpen ? '1px solid #1e1e2e' : 'none', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        overflow: 'hidden',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        position: 'relative'
-      }}>
-        {/* Toggle Tab (Floating on map edge) */}
-        {!isSidebarOpen && (
-          <button 
-            onClick={() => setIsSidebarOpen(true)}
-            style={{
-              position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
-              zIndex: 1000, backgroundColor: 'rgba(0,255,204,0.8)', color: '#000',
-              border: 'none', borderRadius: '4px 0 0 4px', width: '24px', height: '60px',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '-4px 0 10px rgba(0,255,204,0.3)'
-            }}
-          >
-            <ChevronLeft size={20} />
-          </button>
-        )}
-        
-        {isSidebarOpen && window.innerWidth <= 950 && (
-          <button 
-            onClick={() => setIsSidebarOpen(false)}
-            style={{
-              position: 'absolute', left: '-24px', top: '50%', transform: 'translateY(-50%)',
-              zIndex: 1000, backgroundColor: 'rgba(0,255,204,0.8)', color: '#000',
-              border: 'none', borderRadius: '4px 0 0 4px', width: '24px', height: '60px',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }}
-          >
-            <ChevronRight size={20} />
-          </button>
-        )}
+      {/* RIGHT PANEL */}
+      <div style={{ width: '320px', minWidth: '320px', backgroundColor: '#09090f', borderLeft: '1px solid #1e1e2e', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
         {/* Header */}
         <div style={{ padding: '0.5rem 0.8rem', backgroundColor: '#0d0d18', borderBottom: '1px solid #1e1e2e', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
@@ -429,7 +256,7 @@ export default function TriagePhaseUI() {
         </div>
 
         {sel ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', paddingBottom: '2rem' }}>
+          <>
             {/* Body + Scan Rows — side by side */}
             <div style={{ display: 'flex', gap: '0.6rem', padding: '0.7rem 0.8rem', borderBottom: '1px solid #1a1a2a', flexShrink: 0, alignItems: 'flex-start' }}>
 
@@ -477,7 +304,7 @@ export default function TriagePhaseUI() {
               <TriageStrip color="yellow" symbol="II" label="危險 DELAYED" onClick={() => handleTriage('yellow')} disabled={!anyScanned} />
               <TriageStrip color="green" symbol="III" label="輕傷 MINOR" onClick={() => handleTriage('green')} disabled={!anyScanned} />
             </div>
-            </div>
+          </>
         ) : (
           /* Empty state */
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', padding: '1rem' }}>
