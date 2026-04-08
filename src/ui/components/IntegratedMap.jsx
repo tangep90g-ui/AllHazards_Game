@@ -14,7 +14,9 @@ export default function IntegratedMap({
   onMapClick, 
   showPatients = true 
 }) {
-  const { patients, tacticalAssets, currentScenario, vehicles } = gameStateData;
+  if (!gameStateData) return <div style={{ flex: 1, backgroundColor: '#000' }}>Loading Map...</div>;
+  
+  const { patients = [], tacticalAssets = [], currentScenario = {}, vehicles = [] } = gameStateData;
 
   return (
     <div 

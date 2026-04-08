@@ -52,19 +52,26 @@ class StateManager {
   initResponsePhase(megaphoned = false) {
     this.state.phase = 'COMMAND_CENTER';
     
+    // Safety check for templates (Vite/ESM sometimes wraps JSON in .default)
+    const templates = Array.isArray(patientTemplates) ? patientTemplates : (patientTemplates.default || []);
+    
     // Initial vehicles for transport tab
     this.addVehicle("救護 91 (ALS 車輛)", 1);
     this.addVehicle("民間救護車 (BLS 車輛)", 2);
-    for(let i=0; i<6; i++) {
-        // Ensure initial diversity by rotating through key templates
-        const templateIndex = (i % patientTemplates.length);
-        const randTemplate = patientTemplates[templateIndex];
-        const p = new Patient(
-            i+1, 
-            Math.floor(Math.random() * 60) + 20,
-            Math.floor(Math.random() * 60) + 20,
-            randTemplate
-        );
+    
+    const newPatients = [];
+    if (templates.length > 0) {
+        for(let i=0; i<6; i++) {
+            const templateIndex = (i % templates.length);
+            const randTemplate = templates[templateIndex];
+            if (!randTemplate) continue;
+
+            const p = new Patient(
+                i+1, 
+                Math.floor(Math.random() * 60) + 20,
+                Math.floor(Math.random() * 60) + 20,
+                randTemplate
+            );
         
         // Feature: Green gathering
         if (megaphoned && p.trueTriageStatus === 'green') {
@@ -76,8 +83,9 @@ class StateManager {
         }
         
         newPatients.push(p);
+      }
+      this.state.patients = newPatients;
     }
-    this.state.patients = newPatients;
     
     // Start game loop timer
     if (this.timerId) clearInterval(this.timerId);
@@ -324,8 +332,11 @@ class StateManager {
   }
 
   addVehicle(name, capacity) {
+    // Safety check for array existence
+    if (!this.state.tacticalAssets) this.state.tacticalAssets = [];
+    
     // Check if Staging Area exists
-    const stagingArea = this.state.tacticalAssets.find(a => a.type === 'action_setup_staging');
+    const stagingArea = this.state.tacticalAssets.find(a => a && a.type === 'action_setup_staging');
     
     // Default position is bottom right if no staging area
     const posX = stagingArea ? stagingArea.x + (Math.random() * 8 - 4) : 95;
