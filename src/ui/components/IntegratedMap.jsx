@@ -74,7 +74,7 @@ export default function IntegratedMap({
       })}
 
       {/* Patients Layer */}
-      {showPatients && patients.map(patient => {
+      {showPatients && patients.filter(p => !p.transported).map(patient => {
         const isSel = selectedPatientId === patient.id;
         let dotColor = 'rgba(200,200,200,0.2)';
         if (patient.status === 'red') dotColor = '#cc1111';

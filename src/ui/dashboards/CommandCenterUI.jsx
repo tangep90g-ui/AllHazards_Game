@@ -146,7 +146,10 @@ export default function CommandCenterUI() {
           <IntegratedMap 
             gameStateData={gameStateData}
             selectedPatientId={selectedPatientId}
-            onPatientSelect={(id) => setSelectedPatientId(id)}
+            onPatientSelect={(id) => {
+              setSelectedPatientId(id);
+              setActiveTab('TRIAGE'); // Auto switch to triage assessment
+            }}
             onMapClick={pendingPlacementAction ? handleMapPlacement : null}
           />
 

@@ -143,8 +143,12 @@ class StateManager {
                     }
                 } else if (!p.isStabilized) {
                     // Normal/Accelerated Deterioration
-                    const baseDecay = (p.status === 'red' || p.trueTriageStatus === 'red') ? 6 : 2;
-                    p.hp -= (baseDecay * decayMultiplier);
+                    // FIX: Green patients (Minor) should not naturally deteriorate to death in this simulation
+                    const isGreen = p.status === 'green' || p.trueTriageStatus === 'green';
+                    if (!isGreen) {
+                        const baseDecay = (p.status === 'red' || p.trueTriageStatus === 'red') ? 6 : 2;
+                        p.hp -= (baseDecay * decayMultiplier);
+                    }
                 }
             }
 
@@ -356,6 +360,9 @@ class StateManager {
             if (p.status === 'yellow') vehicleScore += 100;
             if (p.status === 'green') vehicleScore += 50; 
             if (p.status === 'black') vehicleScore -= 500; // Terrible mistake
+            
+            // Mark as transported so they disappear from UI
+            p.transported = true;
         }
     });
 
