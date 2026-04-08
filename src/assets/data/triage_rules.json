@@ -1,0 +1,32 @@
+{
+  "protocol": "START",
+  "description": "Simple Triage and Rapid Treatment for Adults",
+  "rules": {
+    "black": {
+      "condition": "respiration == 0 && (pulse == 0 || pulse > 0)",
+      "description": "No respiration after jaw thrust"
+    },
+    "red": [
+      {
+        "condition": "respiration > 30",
+        "description": "Respiration over 30/min"
+      },
+      {
+        "condition": "respiration > 0 && pulse == 0",
+        "description": "No radial pulse / Capillary refill > 2s"
+      },
+      {
+        "condition": "respiration > 0 && pulse > 0 && mental == 'unconscious'",
+        "description": "Cannot follow simple commands"
+      }
+    ],
+    "yellow": {
+      "condition": "respiration > 0 && respiration <= 30 && pulse > 0 && mental == 'obedient_immobile'",
+      "description": "Follows commands but unable to move/walk"
+    },
+    "green": {
+      "condition": "respiration > 0 && respiration <= 30 && pulse > 0 && mental == 'obedient_walking'",
+      "description": "Walking wounded"
+    }
+  }
+}

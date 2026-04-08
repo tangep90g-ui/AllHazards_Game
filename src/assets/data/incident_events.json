@@ -1,0 +1,18 @@
+[
+  {
+    "id": "event_aftershock_1",
+    "triggerTimeLeft": 120,
+    "name": "強烈餘震",
+    "description": "現場發生芮氏規模 5.0 餘震！若未能及早完成部分檢傷，將導致人員混亂！救援分數扣減 200 分。",
+    "type": "PENALTY",
+    "value": -200
+  },
+  {
+    "id": "event_civilian_panic",
+    "triggerTimeLeft": 60,
+    "name": "人群恐慌爆發",
+    "description": "未能及時安撫，民眾開始隨處竄逃！場景中自動額外激增兩名嚴重傷病患！",
+    "type": "SPAWN_PATIENTS",
+    "value": 2
+  }
+]

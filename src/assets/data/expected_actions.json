@@ -1,0 +1,65 @@
+[
+  {
+    "id": "action_megaphone",
+    "title": "擴音器：呼叫輕傷患集中",
+    "description": "引導還能行走的輕傷患往右側安全區移動。",
+    "recommendedTimeWindow": [180, 0],
+    "bonus": 10,
+    "penalty": 0,
+    "requiresPlacement": false,
+    "isCooldownAction": true,
+    "cooldownTime": 10
+  },
+  {
+    "id": "action_icp",
+    "title": "建立現場指揮站 (ICP)",
+    "description": "抵達現場後應盡速指定指揮位置並著裝。",
+    "recommendedTimeWindow": [180, 160],
+    "bonus": 100,
+    "penalty": -50,
+    "requiresPlacement": true,
+    "zoneRule": { "hot": 10, "warm": 100, "cold": 300 }
+  },
+  {
+    "id": "action_request_als",
+    "title": "請求 ALS 救護車支援",
+    "description": "評估現場有重傷患後，提早請求高級救命術車輛。",
+    "recommendedTimeWindow": [160, 130],
+    "bonus": 150,
+    "penalty": -20,
+    "requiresPlacement": false,
+    "isCooldownAction": true,
+    "cooldownTime": 15
+  },
+  {
+    "id": "action_setup_treatment",
+    "title": "劃定傷患處置區 (Treatment)",
+    "description": "為重傷患提供集中穩定生命徵象的急救區。",
+    "recommendedTimeWindow": [170, 120],
+    "bonus": 100,
+    "penalty": -20,
+    "requiresPlacement": true,
+    "zoneRule": { "hot": 10, "warm": 300, "cold": 150 }
+  },
+  {
+    "id": "action_setup_staging",
+    "title": "劃定車輛集結區 (Staging)",
+    "description": "避免救護車塞在入口，應提早指派集結點。",
+    "recommendedTimeWindow": [150, 110],
+    "bonus": 100,
+    "penalty": 0,
+    "requiresPlacement": true,
+    "zoneRule": { "hot": 10, "warm": 50, "cold": 300 }
+  },
+  {
+    "id": "action_hospital_comms",
+    "title": "聯繫周邊急救責任醫院",
+    "description": "提早啟動預警，讓醫院啟動 333 / 大量傷病患動員機制。",
+    "recommendedTimeWindow": [120, 80],
+    "bonus": 200,
+    "penalty": -150,
+    "requiresPlacement": false,
+    "isCooldownAction": true,
+    "cooldownTime": 30
+  }
+]

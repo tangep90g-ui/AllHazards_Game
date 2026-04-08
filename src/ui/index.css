@@ -1,0 +1,100 @@
+:root {
+  --bg-dark: #07070b;
+  --bg-panel: rgba(20, 20, 28, 0.7);
+  --border-neon: rgba(0, 255, 204, 0.3);
+  --text-main: #f0f0f5;
+  --text-dim: #8b8b99;
+  
+  --color-red: #ff3333;
+  --color-yellow: #ffcc00;
+  --color-green: #00cc66;
+  --color-black: #1a1a1a;
+  
+  --header-h: 60px;
+  --nav-h: 50px;
+  
+  --glitch-animation: glitch 1.5s infinite;
+}
+
+@media screen and (max-height: 450px) {
+  :root {
+    --header-h: 40px;
+    --nav-h: 40px;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-overflow-scrolling: touch; /* Smooth mobile scrolling */
+}
+
+body {
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  overflow: hidden; 
+  user-select: none;
+}
+
+.glass-panel {
+  background: var(--bg-panel);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-neon);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+.triage-btn {
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+}
+
+.triage-btn:-active {
+  transform: scale(0.95);
+}
+
+.triage-btn.red { background-color: var(--color-red); color: white; border: 2px solid #ff9999; box-shadow: 0 0 15px rgba(255, 51, 51, 0.5); }
+.triage-btn.yellow { background-color: var(--color-yellow); color: black; border: 2px solid #ffee99; box-shadow: 0 0 15px rgba(255, 204, 0, 0.5); }
+.triage-btn.green { background-color: var(--color-green); color: white; border: 2px solid #99ffcc; box-shadow: 0 0 15px rgba(0, 204, 102, 0.5); }
+.triage-btn.black { background-color: var(--color-black); color: white; border: 2px solid #666; box-shadow: 0 0 15px rgba(26, 26, 26, 0.5); }
+
+/* Warning Strip pattern */
+.warning-strip {
+  background: repeating-linear-gradient(
+    45deg,
+    #ffcc00,
+    #ffcc00 10px,
+    #000 10px,
+    #000 20px
+  );
+  height: 4px;
+  width: 100%;
+}
+
+/* Orientation Alert Overlay */
+#orientation-alert {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #000;
+  color: #fff;
+  z-index: 10000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+}
+
+@media screen and (max-width: 950px) and (orientation: portrait) {
+  #orientation-alert { display: flex; }
+}
+
+/* Mobile-first base styles */
+@media screen and (max-width: 1024px) {
+  :root {
+    --header-height: auto;
+  }
+}

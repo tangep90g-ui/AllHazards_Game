@@ -1,0 +1,57 @@
+[
+  {
+    "id": "scenario_collapse",
+    "title": "商業大樓倒塌",
+    "subtitle": "特大建築物崩塌事件 (STRUCTURAL COLLAPSE)",
+    "bgImage": "/bg_collapse.png",
+    "dispatchData": {
+      "location": "第 7 區 - 商業混合大樓",
+      "report": "發生嚴重氣爆，建築物部分崩塌。回報現場燃燒中，目視逾 10 人員受困與倒臥街區，亟需救援！",
+      "suggestion": "救護 91 (ALS 車輛) 作為先遣小隊 (First Responder)。"
+    }
+  },
+  {
+    "id": "scenario_train",
+    "title": "高速鐵路出軌翻覆",
+    "subtitle": "軌道運輸重大事故 (TRAIN DERAILMENT)",
+    "bgImage": "/bg_train.png",
+    "dispatchData": {
+      "location": "北區隧道出口 - 高鐵 812 次列車",
+      "report": "高鐵傳出出軌事故，多節車廂翻覆且冒煙。車內受困人數不明，估計至少 30+ 傷患，請求重傷處理隊！",
+      "suggestion": "救護 91 (ALS) 快速抵達並建立初期指揮所。"
+    }
+  },
+  {
+    "id": "scenario_chemical",
+    "title": "化學工廠嚴重氣爆",
+    "subtitle": "工業區化學災害 (CHEMICAL EXPLOSION)",
+    "bgImage": "/bg_chemical.png",
+    "dispatchData": {
+      "location": "大園工業區 - 德信化學工廠",
+      "report": "反應槽發生劇烈爆炸，現場有不明化學物質外洩。目視多名員工燒傷與吸入性受傷倒地，急需除污配置！",
+      "suggestion": "救護 91 (ALS) 通報 HAZMAT 小組並進行先遣檢傷。"
+    }
+  },
+  {
+    "id": "scenario_stadium",
+    "title": "大型演唱會人群踩踏",
+    "subtitle": "推擠踩踏大規模傷亡 (STADIUM STAMPEDE)",
+    "bgImage": "/bg_stadium.png",
+    "dispatchData": {
+      "location": "中心體育館 - 三號出口通道",
+      "report": "演唱會散場時發生人群推擠踩踏，現場極度混亂。回報有大量人員倒地且無呼吸脈搏，急需心肺復甦救援！",
+      "suggestion": "救護 91 (ALS) 建立傷患集中區 (Treatment Area)。"
+    }
+  },
+  {
+    "id": "scenario_pileup",
+    "title": "國道連環追撞火燒車",
+    "subtitle": "國道多車連環事故 (MULTI-VEHICLE PILEUP)",
+    "bgImage": "/bg_pileup.png",
+    "dispatchData": {
+      "location": "中山高南下 35K 處 - 五楊高架段",
+      "report": "濃霧導致多部聯結車與客運連環追撞，兩車起火。目視數人受困車內且有多人彈出車外，請求特搜支援！",
+      "suggestion": "救護 91 (ALS) 在安全區域建立 ICP 並確認檢傷權益。"
+    }
+  }
+]
