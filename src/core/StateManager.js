@@ -174,6 +174,7 @@ class StateManager {
             this.emitUpdate();
         }
     }, 1000);
+    this.emitUpdate();
   }
   
   spawnPatients(count) {
