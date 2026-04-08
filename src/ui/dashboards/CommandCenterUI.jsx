@@ -70,7 +70,7 @@ export default function CommandCenterUI() {
               const isCooldownActive = action.isCooldownAction && gameStateData.skillsCooldown[action.id] > 0;
               const [maxT, minT] = action.recommendedTimeWindow;
               const isCompleted = !!status;
-              const isCurrentWindow = !isCompleted && (timeLeft <= maxT && timeLeft >= minT);
+              const isCurrentWindow = !isCompleted && !isCooldownActive && (timeLeft <= maxT && timeLeft >= minT);
               const isMissed = !isCompleted && timeLeft < minT;
               let weight = isCurrentWindow ? 0 : (isCompleted || isMissed ? 2 : 1);
               return { ...action, status, isCooldownActive, isCompleted, isCurrentWindow, isMissed, weight };
@@ -150,6 +150,7 @@ export default function CommandCenterUI() {
               setSelectedPatientId(id);
               setActiveTab('TRIAGE'); // Auto switch to triage assessment
             }}
+            onVehicleClick={() => setActiveTab('TRANSPORT')}
             onMapClick={pendingPlacementAction ? handleMapPlacement : null}
           />
 

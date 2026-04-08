@@ -256,11 +256,17 @@ class StateManager {
         
         if (actionId === 'action_megaphone') {
            let collected = 0;
+           // Check if Treatment Area exists
+           const treatmentArea = this.state.tacticalAssets.find(a => a.type === 'action_setup_treatment');
+           // Default to bottom right if no treatment area
+           const targetX = treatmentArea ? treatmentArea.x : 90;
+           const targetY = treatmentArea ? treatmentArea.y : 90;
+
            this.state.patients.forEach(p => {
                if (p.status === 'unknown' && p.trueTriageStatus === 'green') {
                    p.status = 'green';
-                   p.x = 88 + (Math.random() * 8); // Move to right side
-                   p.y = 80 + (Math.random() * 15);
+                   p.x = targetX + (Math.random() * 6 - 3); // Cluster around target
+                   p.y = targetY + (Math.random() * 6 - 3);
                    collected++;
                }
            });
@@ -268,11 +274,25 @@ class StateManager {
            this.state.score += bonus;
            globalEvents.emit('INCIDENT_EVENT', { 
                name: "輕傷疏散", 
-               description: `擴音器廣播成功引導了 ${collected} 名走動患者前往安全區。(+${bonus})`, 
+               description: `擴音器廣播成功引導了 ${collected} 名走動患者前往${treatmentArea ? '傷患處置區' : '安全區'}。(+${bonus})`, 
                type: 'BONUS', 
                value: bonus 
            });
            this.emitUpdate();
+        }
+
+        // Feature: Request ALS Support Reinforcement
+        if (actionId === 'action_request_als') {
+           const count = Math.floor(Math.random() * 2) + 1; // 1-2 vehicles
+           for(let i=0; i<count; i++) {
+               this.addVehicle(`支援 ALS 救護車 (增援-${this.vehicleCounter})`, 1);
+           }
+           globalEvents.emit('INCIDENT_EVENT', { 
+               name: "ALS 增援", 
+               description: `正在調派 ${count} 台高級救命術(ALS)車輛趕往現場。`, 
+               type: 'BONUS', 
+               value: 0 
+           });
         }
         return;
     }
@@ -301,12 +321,21 @@ class StateManager {
   }
 
   addVehicle(name, capacity) {
+    // Check if Staging Area exists
+    const stagingArea = this.state.tacticalAssets.find(a => a.type === 'action_setup_staging');
+    
+    // Default position is bottom right if no staging area
+    const posX = stagingArea ? stagingArea.x + (Math.random() * 8 - 4) : 95;
+    const posY = stagingArea ? stagingArea.y + (Math.random() * 8 - 4) : 95;
+
     this.state.vehicles.push({
         id: this.vehicleCounter++,
         name,
         capacity,
         loadedPatients: [],
-        departed: false
+        departed: false,
+        x: posX,
+        y: posY
     });
   }
 

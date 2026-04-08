@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, LocateFixed, HeartPulse, Truck, Flag } from 'lucide-react';
+import { User, LocateFixed, HeartPulse, Truck, Flag, Ambulance } from 'lucide-react';
 
 const ASSET_ICONS = {
   action_icp: { icon: <Flag size={20} />, color: '#00ccff', label: 'ICP 指揮站' },
@@ -14,7 +14,7 @@ export default function IntegratedMap({
   onMapClick, 
   showPatients = true 
 }) {
-  const { patients, tacticalAssets, currentScenario } = gameStateData;
+  const { patients, tacticalAssets, currentScenario, vehicles } = gameStateData;
 
   return (
     <div 
@@ -37,6 +37,30 @@ export default function IntegratedMap({
       {/* Grid Overlay */}
       <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(0,255,204,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,204,0.04) 1px,transparent 1px)', backgroundSize: '40px 40px', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: '10px', left: '10px', fontSize: '0.6rem', color: 'rgba(0,255,150,0.3)', fontWeight: 'bold', letterSpacing: '2px' }}>TACTICAL BOARD VIEW</div>
+
+      {/* Vehicles Layer (Ambulances at Staging/Right-Bottom) */}
+      {vehicles && vehicles.filter(v => !v.departed).map(v => (
+        <div
+            key={`veh-${v.id}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onVehicleClick) onVehicleClick(v.id);
+            }}
+            style={{
+              position: 'absolute', top: `${v.y}%`, left: `${v.x}%`,
+              transform: 'translate(-50%, -50%)',
+              color: '#00ffcc',
+              cursor: 'pointer',
+              zIndex: 45,
+              animation: 'pulse 3s infinite',
+              filter: 'drop-shadow(0 0 5px rgba(0,255,204,0.6))'
+            }}
+            title={v.name}
+        >
+          <Ambulance size={24} />
+          <div style={{ fontSize: '0.5rem', textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.7)', padding: '0 2px' }}>{v.id}</div>
+        </div>
+      ))}
 
       {/* Tactical Assets Layer (Stamps) */}
       {tacticalAssets && tacticalAssets.map((asset, idx) => {
